@@ -1,7 +1,7 @@
 **Bamazon - mock online store with a command line interface**
 
 
-The purpose of this application is to allow a user to perform multiple different actions from the command line. Below they are listed.
+The purpose of this application is to allow a user to perform multiple different actions from the command line.
 
 ![alt text](https://github.com/csvernon/Bamazon/blob/master/bamazonGIF.gif)
 
