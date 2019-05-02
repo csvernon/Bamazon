@@ -3,7 +3,7 @@
 
 The purpose of this application is to allow a user to perform multiple different actions from the command line. Below they are listed.
 
-![alt text]https://github.com/csvernon/Bamazon/blob/master/bamazonGIF.gif "Example usage")
+![alt text](https://github.com/csvernon/Bamazon/blob/master/bamazonGIF.gif)
 
 
 This application utilies node.js, javascript, and a MySQL database.
