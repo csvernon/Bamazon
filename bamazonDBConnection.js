@@ -1,7 +1,12 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+var username = "";
+var managerUsername = "Manager"
+var managerPassword = "Admin"
 var selectedProduct = "";
 var currentQuantity = "";
+var managerSelectedProduct = "";
+var managerCurrentQuantity = "";
 var selectedAmount = "";
 var cartBalance = "";
 var itemPrice = "";
@@ -35,7 +40,7 @@ function start() {
       name: "which",
       type: "list",
       message: "Hello! Welcome to Bamazon! Where would you like to go?",
-      choices: ["Check Catalog", "Order", "Reset", "EXIT"]
+      choices: ["Check Catalog", "Order", "Login", "Logout", "EXIT"]
     })
     .then(function (answer) {
       // based on their answer, either call the bid or the post functions
@@ -45,7 +50,12 @@ function start() {
       else if (answer.which === "Order") {
         Order();
       }
-      else if (answer.which === "Reset") {
+      else if (answer.which === "Login") {
+        Login();
+      }
+      else if (answer.which === "Logout") {
+        username = "";
+        password = "";
         start();
       } else {
         connection.end();
@@ -139,6 +149,163 @@ function OrderComplete() {
           start();};
     })
 }
+
+function Login() {
+  inquirer
+    .prompt({
+      name: "Login",
+      type: "input",
+      message: "What is your username?",
+    })
+    .then(function (answer) {
+      username = answer.Login;
+      Password();
+    })
+}
+
+function Password() {
+  inquirer
+    .prompt({
+      name: "Password",
+      type: "input",
+      message: "What is your password?",
+    })
+    .then(function (answer) {
+      password = answer.Password;
+      if (password == managerPassword && username == managerUsername){
+        manager();
+      }else {console.log("Welcome " + username + "!")
+      // console.log(username + " | " + managerUsername + " | " + password + " | " + managerPassword)
+    start();}
+    })
+}
+
+function manager() {
+  inquirer
+    .prompt({
+      name: "which",
+      type: "list",
+      message: "Hello " + username + "! Welcome back! What would you like to do?",
+      choices: ["View Products for Sale", "View Low Inventory", "Add to Inventory", "Add new Product", "Logout", "EXIT"]
+    })
+    .then(function (answer) {
+      // based on their answer, either call the bid or the post functions
+      if (answer.which === "View Products for Sale") {
+        inventory();
+      }
+      else if (answer.which === "View Low Inventory") {
+        lowInventory();
+      }
+      else if (answer.which === "Add to Inventory") {
+        addInventory();
+      }
+      else if (answer.which === "Add New Product") {
+        addProduct();
+      }
+      else if (answer.which === "Logout") {
+        username = "";
+        password = "";
+        start();
+      } else {
+        connection.end();
+      }
+    });
+}
+
+function inventory() {
+  console.log("Selecting all inventory...\n");
+  connection.query("SELECT * FROM products", function (err, res) {
+    if (err) throw err;
+    for (var i = 0; i < res.length; i++){
+    console.log("Product ID: " + res[i].id + " | " + res[i].item_Name + " | Price: " + res[i].price + " | Quantity in stock: " + res[i].quantity + "\n");
+    } 
+    manager();
+})};
+
+function lowInventory() {
+  console.log("Selecting all inventory...\n");
+  connection.query("SELECT * FROM products WHERE quantity < 5", function (err, res) {
+    if (err) throw err;
+    for (var i = 0; i < res.length; i++){
+    console.log("Product ID: " + res[i].id + " | " + res[i].item_Name + " | Price: " + res[i].price + " | Quantity in stock: " + res[i].quantity + "\n");
+    } 
+    manager();
+})};
+
+function addInventory() {
+  inquirer
+    .prompt({
+      name: "Update",
+      type: "input",
+      message: "Please input the product ID that would you like to update.",
+    })
+    .then(function (answer) {
+      // when finished prompting, insert a new item into the db with that info
+      var query = '"' + answer.Update + '"';
+      // console.log(answer.Order)
+      // console.log(JSON.stringify(answer));
+      connection.query("SELECT * FROM products WHERE id = " + query, function (err, results) {
+        if (err) throw err;
+
+        if (results != "") {
+          // console.log(JSON.stringify(results));
+          managerSelectedProduct = results[0].item_Name;
+          managerCurrentQuantity = results[0].quantity;
+          console.log("You have selected " + managerSelectedProduct);
+          UpdateComplete();
+        }
+        else {
+          console.log("Sorry, we were unable to find that product")
+          manager();
+        }
+      });
+    })
+}
+
+function UpdateComplete() {
+  inquirer
+    .prompt({
+      name: "UpdateComplete",
+      type: "input",
+      message: "What quantity of " + managerSelectedProduct + " would you like to add? There are " + managerCurrentQuantity + " in stock.",
+    })
+    .then(function (answer) {
+      managerSelectedAmount = answer.UpdateComplete;
+      var MSA = managerSelectedAmount * 1;
+      var MCQ = managerCurrentQuantity * 1;
+      var remainingQuantity = MSA + MCQ;
+      console.log(remainingQuantity);
+      // console.log(JSON.stringify(answer));
+      connection.query("UPDATE products SET ? WHERE ?",
+        [
+          {
+            quantity: remainingQuantity
+          },
+          {
+            item_Name: managerSelectedProduct
+          }
+        ],
+        function (err, results) {
+          if (err) throw err;
+
+          if (results != "") {
+            // console.log(JSON.stringify(results));
+            console.log("There are now " + remainingQuantity + " in stock.");
+            manager();
+          }
+          else {
+            console.log("Sorry, we were unable to find that product");
+            manager();
+          }
+        })
+    })
+}
+
+// If a manager selects View Products for Sale, the app should list every available item: the item IDs, names, prices, and quantities.
+// If a manager selects View Low Inventory, then it should list all items with an inventory count lower than five.
+// If a manager selects Add to Inventory, your app should display a prompt that will let the manager "add more" of any item currently in the store.
+// If a manager selects Add New Product, it should allow the manager to add a completely new product to the store.
+
 
 
 // function createProduct() {
