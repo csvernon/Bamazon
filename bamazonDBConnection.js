@@ -20,7 +20,7 @@ var connection = mysql.createConnection({
   user: "root",
 
   // Your password
-  password: "UNCbootcamp2019=",
+  password: "",
   database: "BamazonDB"
 });
 
@@ -199,7 +199,7 @@ function manager() {
       else if (answer.which === "Add to Inventory") {
         addInventory();
       }
-      else if (answer.which === "Add New Product") {
+      else if (answer.which === "Add new Product") {
         addProduct();
       }
       else if (answer.which === "Logout") {
@@ -223,7 +223,7 @@ function inventory() {
 })};
 
 function lowInventory() {
-  console.log("Selecting all inventory...\n");
+  console.log("Selecting all low inventory products...\n");
   connection.query("SELECT * FROM products WHERE quantity < 5", function (err, res) {
     if (err) throw err;
     for (var i = 0; i < res.length; i++){
@@ -301,67 +301,51 @@ function UpdateComplete() {
     })
 }
 
-// If a manager selects View Products for Sale, the app should list every available item: the item IDs, names, prices, and quantities.
-// If a manager selects View Low Inventory, then it should list all items with an inventory count lower than five.
-// If a manager selects Add to Inventory, your app should display a prompt that will let the manager "add more" of any item currently in the store.
-// If a manager selects Add New Product, it should allow the manager to add a completely new product to the store.
+function addProduct() {
+  inquirer.prompt([
+    {
+    name: "productName",
+    message: "What what is the name of the product you would like to add?"
+  }, {
+    name: "productCost",
+    message: "How much does it cost?"
+  }, {
+    name: "productQuantity",
+    message: "How many do you want to add?"
+  }, {
+    name: "productMaker",
+    message: "Who is the manufacturer?"
+  }, {
+    name: "productCategory",
+    message: "What category is it in?"
+  }
+]).then(function (answer) {
+    var newProduct = answer.productName;
+    var productCost = answer.productCost;
+    var productQuantity = answer.productQuantity;
+    var productMaker = answer.productMaker;
+    var productCategory = answer.productCategory;
+    console.log("We here");
+    connection.query("INSERT INTO products SET ?",
+    {
+      item_Name: newProduct,
+      price: productCost,
+      quantity: productQuantity,
+      manufacturer: productMaker,
+      category: productCategory
+    },
+      function (err, results) {
+        if (err) throw err;
 
-
-
-// function createProduct() {
-//   console.log("Inserting a new product...\n");
-//   var query = connection.query(
-//     "INSERT INTO products SET ?",
-//     {
-//       flavor: "Rocky Road",
-//       price: 3.0,
-//       quantity: 50
-//     },
-//     function(err, res) {
-//       console.log(res.affectedRows + " product inserted!\n");
-//       // Call updateProduct AFTER the INSERT completes
-//       updateProduct();
-//     }
-//   );
-
-//   // logs the actual query being run
-//   console.log(query.sql);
-// }
-
-// function updateProduct() {
-//   console.log("Updating all Rocky Road quantities...\n");
-//   var query = connection.query(
-//     "UPDATE products SET ? WHERE ?",
-//     [
-//       {
-//         quantity: 100
-//       },
-//       {
-//         flavor: "Rocky Road"
-//       }
-//     ],
-//     function(err, res) {
-//       console.log(res.affectedRows + " products updated!\n");
-//       // Call deleteProduct AFTER the UPDATE completes
-//       deleteProduct();
-//     }
-//   );
-
-//   // logs the actual query being run
-//   console.log(query.sql);
-// }
-
-// function deleteProduct() {
-//   console.log("Deleting all strawberry icecream...\n");
-//   connection.query(
-//     "DELETE FROM products WHERE ?",
-//     {
-//       genre: "eurodance"
-//     },
-//     function(err, res) {
-//       console.log(res.affectedRows + " products deleted!\n");
-//       // Call readProducts AFTER the DELETE completes
-//       readProducts();
-//     }
-//   );
-// }
+        if (results != "") {
+          // console.log(JSON.stringify(results));
+          console.log(newProduct + " has been added to database. There are " + productQuantity + " in stock and they are priced at " + productCost + " each.");
+          manager();
+        }
+        else {
+          console.log("Sorry, we were unable to add this product, please contact system support.");
+          manager();
+        }
+      })
+  })
+}
